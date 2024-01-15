@@ -88,7 +88,7 @@ return {
 	id = 71,
 	name = "РанобэРФ",
 	baseURL = baseURL,
-	imageURL = "https://github.com/Rider21/shosetsu-extensions/raw/dev/icons/Ranoberf.png",
+	imageURL = "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Ranoberf.png",
 	chapterType = ChapterType.HTML,
 
 	listings = {

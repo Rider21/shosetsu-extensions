@@ -1,5 +1,6 @@
--- {"id":712,"ver":"1.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
+-- {"id":702,"ver":"1.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1","url>=1.0.0"]}
 
+local url = Require("url")
 local dkjson = Require("dkjson")
 local baseURL = "https://novel.tl"
 
@@ -59,7 +60,7 @@ local function getPassage(chapterURL)
 	local result = dkjson.POST("https://novel.tl/api/site/v2/graphql", {
 		query = "query($url:String){chapter(chapter:{fullUrl:$url}){title text{text}}}",
 		variables = {
-			url = expandURL(chapterURL),
+			url = expandURL(url.decode(chapterURL)),
 		},
 	})
 
@@ -139,8 +140,8 @@ local function parseNovel(novelURL, loadChapters)
 end
 
 return {
-	id = 712,
-	name = "NovelTl",
+	id = 702,
+	name = "NovelTL",
 	baseURL = baseURL,
 	imageURL = "https://novel.tl/logo.png",
 	chapterType = ChapterType.HTML,

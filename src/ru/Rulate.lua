@@ -137,7 +137,7 @@ return {
 	id = 70,
 	name = "Rulate",
 	baseURL = baseURL,
-	imageURL = "https://github.com/Rider21/shosetsu-extensions/raw/dev/icons/Rulate.png",
+	imageURL = "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Rulate.png",
 	chapterType = ChapterType.HTML,
 
 	listings = {

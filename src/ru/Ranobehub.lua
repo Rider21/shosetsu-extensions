@@ -93,7 +93,7 @@ return {
 	name = "Ranobehub",
 	baseURL = baseURL,
 
-	imageURL = "https://github.com/Rider21/shosetsu-extensions/raw/dev/icons/Ranobehub.png",
+	imageURL = "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Ranobehub.png",
 	chapterType = ChapterType.HTML,
 	hasSearch = true,
 
