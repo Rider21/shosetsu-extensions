@@ -1,0 +1,88 @@
+{
+  "libraries": [
+    {
+      "name": "CommonCSS",
+      "ver": "1.0.1"
+    },
+    {
+      "name": "dkjson",
+      "ver": "1.0.1"
+    },
+    {
+      "name": "url",
+      "ver": "1.0.0"
+    }
+  ],
+  "scripts": [
+    {
+      "name": "Rulate",
+      "fileName": "Rulate",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/dev/icons/Rulate.png",
+      "id": 70,
+      "lang": "ru",
+      "ver": "1.0.1",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "РанобэРФ",
+      "fileName": "Ranoberf",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/dev/icons/Ranoberf.png",
+      "id": 71,
+      "lang": "ru",
+      "ver": "1.0.1",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Ranobehub",
+      "fileName": "Ranobehub",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/dev/icons/Ranobehub.png",
+      "id": 72,
+      "lang": "ru",
+      "ver": "1.0.0",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Ranobelib",
+      "fileName": "Ranobelib",
+      "imageURL": "https://ranobelib.me/icons/android-icon-192x192.png",
+      "id": 73,
+      "lang": "ru",
+      "ver": "1.0.2",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Jaomix",
+      "fileName": "Jaomix",
+      "imageURL": "https://jaomix.ru/wp-content/uploads/2019/08/cropped-logo-2.png",
+      "id": 74,
+      "lang": "ru",
+      "ver": "1.0.2",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Renovels",
+      "fileName": "Renovels",
+      "imageURL": "https://gitlab.com/Rider21/shosetsu-extensions/-/raw/dev/icons/Renovels.png",
+      "id": 701,
+      "lang": "ru",
+      "ver": "1.0.1",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Novel.tl",
+      "fileName": "NovelTL",
+      "imageURL": "https://novel.tl/logo.png",
+      "id": 712,
+      "lang": "ru",
+      "ver": "1.0.0",
+      "libVer": "1.0.0",
+      "md5": ""
+    }
+  ]
+}
