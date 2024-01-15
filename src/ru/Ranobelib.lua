@@ -48,7 +48,7 @@ end
 local function parseNovel(novelURL, loadChapters)
 	local d = GETDocument(expandURL(novelURL))
 	local response = json.decode(d:selectFirst("head"):html():match("window.__DATA__ = ({.-});"))
-	ui = response.user and response.user.id
+	ui = response.user and tostring(response.user.id)
 
 	local novel = NovelInfo {
 		title = response.manga.rusName or response.manga.engName or response.manga.name,
