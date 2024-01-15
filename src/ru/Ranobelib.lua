@@ -1,12 +1,12 @@
 -- {"id":73,"ver":"1.0.2","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
 
 local baseURL = "https://ranobelib.me"
-
 local json = Require("dkjson")
 
 local ORDER_BY_FILTER = 3
 local ORDER_BY_VALUES = { "Рейтинг", "Названию (A-Z)", "Просмотрам", "Дате добавления", "Дате обновления", "Количеству глав" }
 local ORDER_BY_TERMS = { "rate", "name", "views", "created_at", "last_chapter_at", "chap_count" }
+local ui = nil
 
 local function shrinkURL(url)
 	return url:gsub(baseURL .. "/", "")
@@ -28,7 +28,7 @@ local function getSearch(data)
 end
 
 local function getPassage(chapterURL)
-	local doc = GETDocument(expandURL(chapterURL))
+	local doc = GETDocument(expandURL(chapterURL .. (ui and "&ui=" .. ui:gsub("[^0-9]", "") or "")))
 	local chap = doc:selectFirst(".reader-container")
 	chap:child(0):before("<h1>" .. doc:select("div.reader-header-action__title:nth-child(3)"):text() .. "</h1>");
 
@@ -48,11 +48,12 @@ end
 local function parseNovel(novelURL, loadChapters)
 	local d = GETDocument(expandURL(novelURL))
 	local response = json.decode(d:selectFirst("head"):html():match("window.__DATA__ = ({.-});"))
+	ui = response.user and response.user.id
 
 	local novel = NovelInfo {
 		title = response.manga.rusName or response.manga.engName or response.manga.name,
 		genres = map(d:select("a.media-tag-item"), function(v) return v:text() end),
-		imageURL = d:select(".container_responsive img"):attr("src"),
+		imageURL = d:selectFirst(".container_responsive img"):attr("src"),
 		description = d:select(".media-description__text"):text(),
 		status = ({ NovelStatus.PUBLISHING, NovelStatus.COMPLETED, NovelStatus.PAUSED, NovelStatus.COMPLETED })
 			[response.manga.status]
@@ -69,18 +70,12 @@ local function parseNovel(novelURL, loadChapters)
 
 	if loadChapters then
 		local chapterList = {}
-		local branchId = ""
 		for k, v in pairs(response.chapters.list) do
-			if v.branch_id then
-				branchId = "?bid=" .. v.branch_id
-			else
-				branchId = ""
-			end
 			table.insert(chapterList, NovelChapter {
 				order = #response.chapters.list - k,
 				release = v.chapter_created_at,
 				title = "Том " .. v.chapter_volume .. " Глава " .. v.chapter_number .. " " .. v.chapter_name,
-				link = response.manga.slug .. "/v" .. v.chapter_volume .. "/c" .. v.chapter_number .. branchId,
+				link = response.manga.slug .. "/v" .. v.chapter_volume .. "/c" .. v.chapter_number .. "?bid=" .. (v.branch_id or ""),
 			});
 		end
 		novel:setChapters(AsList(chapterList))
@@ -114,6 +109,7 @@ return {
 			end
 
 			local d = GETDocument(url .. "&page=" .. data[PAGE])
+			ui = d:select("a.header-right-menu__item"):attr("href")
 
 			return map(d:select("div.media-card-wrap > a"), function(v)
 				return Novel {

@@ -119,15 +119,14 @@ local function parseNovel(novelURL, loadChapters)
 		local chapterList = mapNotNil(d:select("tr.chapter_row"), function(v)
 			local releaseDate = v:select("td > span"):attr("title")
 			order = order + 1
-			if v:select('td > span[class="disabled"]'):size() > 0 or releaseDate == "" then
-				return nil
+			if v:select('td > span[class="disabled"]'):size() < 1 and releaseDate then
+				return NovelChapter {
+					title = v:selectFirst("td > a"):text(),
+					link = v:selectFirst("td > a"):attr("href"),
+					release = releaseDate,
+					order = order
+				}
 			end
-			return NovelChapter {
-				title = v:selectFirst("td > a"):text(),
-				link = v:selectFirst("td > a"):attr("href"),
-				release = releaseDate,
-				order = order
-			}
 		end)
 		novel:setChapters(AsList(chapterList))
 	end
