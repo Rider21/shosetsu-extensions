@@ -29,7 +29,7 @@ local function getPassage(chapterURL)
 		v:attr("src", baseURL .. "/api/media/" .. v:attr("data-media-id"))
 	end)
 
-	return pageOfElem(chap, true)
+	return pageOfElem(chap)
 end
 
 local function parseNovel(novelURL, loadChapters)

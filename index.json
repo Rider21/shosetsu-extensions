@@ -17,17 +17,17 @@
     {
       "name": "Rulate",
       "fileName": "Rulate",
-      "imageURL": "https://github.com/Rider21/shosetsu-extensions/main/dev/icons/Rulate.png",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Rulate.png",
       "id": 70,
       "lang": "ru",
-      "ver": "1.0.1",
+      "ver": "1.0.0",
       "libVer": "1.0.0",
       "md5": ""
     },
     {
       "name": "РанобэРФ",
       "fileName": "Ranoberf",
-      "imageURL": "https://github.com/Rider21/shosetsu-extensions/main/dev/icons/Ranoberf.png",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Ranoberf.png",
       "id": 71,
       "lang": "ru",
       "ver": "1.0.0",
@@ -37,7 +37,7 @@
     {
       "name": "Ranobehub",
       "fileName": "Ranobehub",
-      "imageURL": "https://github.com/Rider21/shosetsu-extensions/main/dev/icons/Ranobehub.png",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Ranobehub.png",
       "id": 72,
       "lang": "ru",
       "ver": "1.0.0",
@@ -67,7 +67,7 @@
     {
       "name": "Renovels",
       "fileName": "Renovels",
-      "imageURL": "https://gitlab.com/Rider21/shosetsu-extensions/-/main/dev/icons/Renovels.png",
+      "imageURL": "https://github.com/Rider21/shosetsu-extensions/raw/main/icons/Renovels.png",
       "id": 701,
       "lang": "ru",
       "ver": "2.0.0",

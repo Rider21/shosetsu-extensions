@@ -118,7 +118,7 @@ local function getPassage(chapterURL)
 	chap:select(".adblock-service"):remove()
 	chap:child(0):before("<h1>" .. d:select(".entry-title"):text() .. "</h1>");
 
-	return pageOfElem(chap, true)
+	return pageOfElem(chap)
 end
 
 local function parseNovel(novelURL, loadChapters)
