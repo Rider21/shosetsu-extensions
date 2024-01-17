@@ -1,19 +1,18 @@
--- {"id":74,"ver":"1.0.2","libVer":"1.0.0","author":"Rider21"}
+-- {"id":74,"ver":"2.0.0","libVer":"1.0.0","author":"Rider21"}
 
 local baseURL = "https://jaomix.ru"
 
-local ORDER_BY_FILTER = 3
-local ORDER_BY_VALUES = { "Дате добавления", "Имя", "Просмотры", "Дате обновления",
-	"Топ дня", "Топ недели", "Топ месяца", "Топ года", "Топ за все время" }
-local ORDER_BY_TERMS = { "new", "alphabet", "count", "upd", "topday", "topweek", "topyear", "alltime" }
+local SORT_BY_FILTER = 2
+local SORT_BY_TERMS = { 'topweek', 'alphabet', 'upd', 'new', 'count', 'topyear', 'topday', 'alltime', 'topmonth' }
 
-local LANGUAGE_FILTER = 4
-local LANGUAGE_VALUES = {
-	"Английский",
-	"Китайский",
-	"Корейский",
-	"Японский"
-}
+local SORT_DAY_CREATE_FILTER = 3
+local SORT_DAY_CREATE_TERMS = { "1", "1218", "1836", "3060", "365", "6090", "9012", "30" }
+
+local SORT_COUNT_CHAPT_FILTER = 4
+local SORT_COUNT_CHAPT_TERMS = { "1", "500", "1020", "2030", "3040", "400", "510" }
+
+local LANGUAGE_FILTER = 5
+local LANGUAGE_VALUES = { "Английский", "Китайский", "Корейский", "Японский" }
 
 local GENRE_FILTER = 10
 local GENRE_VALUES = {
@@ -89,7 +88,7 @@ local function getSearch(data)
 
 	for k, v in pairs(data) do
 		if v then
-			if (k > 4 and k < 10) then
+			if (k > 5 and k < 10) then
 				url = url .. "&lang[]=" .. LANGUAGE_VALUES[k - LANGUAGE_FILTER]
 			elseif (k > 10 and k < 100) then
 				url = url .. "&genre[]=" .. GENRE_VALUES[k - GENRE_FILTER]
@@ -97,9 +96,13 @@ local function getSearch(data)
 		end
 	end
 
-	url = url .. "&sortby=" .. ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1] .. "&page=" .. data[PAGE]
+	local d = GETDocument(url ..
+		"&sortby=" .. SORT_BY_TERMS[data[SORT_BY_FILTER] + 1] ..
+		"&sortdaycreate=" .. SORT_DAY_CREATE_TERMS[data[SORT_DAY_CREATE_FILTER] + 1] ..
+		"&sortcountchapt=" .. SORT_COUNT_CHAPT_TERMS[data[SORT_COUNT_CHAPT_FILTER] + 1] ..
+		"&gpage=" .. data[PAGE]
+	)
 
-	local d = GETDocument(url)
 	return map(d:select("div.one div.img-home > a"), function(v)
 		return Novel {
 			title = v:attr("title"),
@@ -177,7 +180,36 @@ return {
 	isSearchIncrementing = true,
 	search = getSearch,
 	searchFilters = {
-		DropdownFilter(ORDER_BY_FILTER, "Сортировка", ORDER_BY_VALUES),
+		DropdownFilter(SORT_BY_FILTER, "Сортировка", {
+			'Топ недели',
+			'По алфавиту',
+			'По дате обновления',
+			'По дате создания',
+			'По просмотрам',
+			'Топ года',
+			'Топ дня',
+			'Топ за все время',
+			'Топ месяца'
+		}),
+		DropdownFilter(SORT_DAY_CREATE_FILTER, "Дата добавления", {
+			"Любое",
+			"От 120 до 180 дней",
+			"От 180 до 365 дней",
+			"От 30 до 60 дней",
+			"От 365 дней",
+			"От 60 до 90 дней",
+			"От 90 до 120 дней",
+			"Послед. 30 дней"
+		}),
+		DropdownFilter(SORT_COUNT_CHAPT_FILTER, "Количество глав", {
+			"Любое кол-во глав",
+			"До 500",
+			"От 1000 до 2000",
+			"От 2000 до 3000",
+			"От 3000 до 4000",
+			"От 4000",
+			"От 500 до 1000"
+		}),
 		FilterGroup("Страна", map(LANGUAGE_VALUES, function(v, i)
 			return CheckboxFilter(LANGUAGE_FILTER + i, v)
 		end)),

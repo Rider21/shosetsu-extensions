@@ -1,4 +1,4 @@
--- {"id":71,"ver":"1.0.1","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
+-- {"id":71,"ver":"1.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
 
 local baseURL = "https://ранобэ.рф"
 

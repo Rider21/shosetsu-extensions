@@ -1,4 +1,4 @@
--- {"id":701,"ver":"1.0.1","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
+-- {"id":701,"ver":"2.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
 
 local baseURL = "https://renovels.org"
 

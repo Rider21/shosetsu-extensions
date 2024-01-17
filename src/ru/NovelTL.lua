@@ -60,7 +60,7 @@ local function getPassage(chapterURL)
 	local result = dkjson.POST("https://novel.tl/api/site/v2/graphql", {
 		query = "query($url:String){chapter(chapter:{fullUrl:$url}){title text{text}}}",
 		variables = {
-			url = expandURL(url.decode(chapterURL)),
+			url = url.decode(chapterURL),
 		},
 	})
 
