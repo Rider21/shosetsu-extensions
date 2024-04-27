@@ -45,7 +45,7 @@ local function parseNovel(novelURL, loadChapters)
 	local novel = NovelInfo {
 		title = response.content.main_name or response.content.secondary_name,
 		genres = map(response.content.genres, function(v) return v.name end),
-		tags = map(response.content.categories, function(v) return v.name or v.name end),
+		tags = map(response.content.categories, function(v) return v.name end),
 		imageURL = baseURL .. (response.content.img.high or response.content.img.mid or response.content.img.low),
 		description = Document(response.content.description):text(),
 		status = NovelStatus(

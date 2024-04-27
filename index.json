@@ -47,10 +47,10 @@
     {
       "name": "Ranobelib",
       "fileName": "Ranobelib",
-      "imageURL": "https://ranobelib.me/icons/android-icon-192x192.png",
+      "imageURL": "https://ranobelib.me/images/logo/rl/icon.png",
       "id": 73,
       "lang": "ru",
-      "ver": "2.0.0",
+      "ver": "2.1.0",
       "libVer": "1.0.0",
       "md5": ""
     },

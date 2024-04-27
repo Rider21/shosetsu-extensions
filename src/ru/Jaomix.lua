@@ -3,7 +3,7 @@
 local baseURL = "https://jaomix.ru"
 
 local SORT_BY_FILTER = 2
-local SORT_BY_TERMS = { 'topweek', 'alphabet', 'upd', 'new', 'count', 'topyear', 'topday', 'alltime', 'topmonth' }
+local SORT_BY_TERMS = { "topweek", "alphabet", "upd", "new", "count", "topyear", "topday", "alltime", "topmonth" }
 
 local SORT_DAY_CREATE_FILTER = 3
 local SORT_DAY_CREATE_TERMS = { "1", "1218", "1836", "3060", "365", "6090", "9012", "30" }
@@ -130,7 +130,7 @@ local function parseNovel(novelURL, loadChapters)
 		description = d:select("#desc-tab"):text()
 	}
 
-	map(d:select('#info-book > p'), function(v)
+	map(d:select("#info-book > p"), function(v)
 		local str = v:text()
 		if str:match("Автор:") then
 			novel:setAuthors(split(str:gsub("Автор: ", ""), ", "))
@@ -181,15 +181,15 @@ return {
 	search = getSearch,
 	searchFilters = {
 		DropdownFilter(SORT_BY_FILTER, "Сортировка", {
-			'Топ недели',
-			'По алфавиту',
-			'По дате обновления',
-			'По дате создания',
-			'По просмотрам',
-			'Топ года',
-			'Топ дня',
-			'Топ за все время',
-			'Топ месяца'
+			"Топ недели",
+			"По алфавиту",
+			"По дате обновления",
+			"По дате создания",
+			"По просмотрам",
+			"Топ года",
+			"Топ дня",
+			"Топ за все время",
+			"Топ месяца"
 		}),
 		DropdownFilter(SORT_DAY_CREATE_FILTER, "Дата добавления", {
 			"Любое",

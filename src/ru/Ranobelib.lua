@@ -1,81 +1,157 @@
--- {"id":73,"ver":"2.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
+-- {"id":73,"ver":"2.1.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
 
 local baseURL = "https://ranobelib.me"
-local json = Require("dkjson")
+local apiURL = "https://api.lib.social/api/manga"
+local dkjson = Require("dkjson")
 
 local ORDER_BY_FILTER = 3
-local ORDER_BY_VALUES = { "Рейтинг", "Названию (A-Z)", "Просмотрам", "Дате добавления", "Дате обновления", "Количеству глав" }
-local ORDER_BY_TERMS = { "rate", "name", "views", "created_at", "last_chapter_at", "chap_count" }
-local ui = nil
+local ORDER_BY_VALUES = {
+	"По рейтингу",
+	"По просмотрам",
+	"Количеству глав",
+	"Дате обновления",
+	"Дате добавления",
+	"По названию (A-Z)",
+	"По названию (А-Я)"
+}
+local ORDER_BY_TERMS = {
+	"rate_avg",
+	"rating_score",
+	"views",
+	"chap_count",
+	"last_chapter",
+	"created_at",
+	"name",
+	"rus_name"
+}
+local allfields =
+"?fields[]=summary&fields[]=genres&fields[]=tags&fields[]=teams&fields[]=authors&fields[]=status_id&fields[]=artists"
 
 local function shrinkURL(url)
 	return url:gsub(baseURL .. "/", "")
 end
 
-local function expandURL(url)
-	return baseURL .. "/" .. url
+local function expandURL(path, type)
+	if type == KEY_NOVEL_URL then
+		return baseURL .. "/ru/book/" .. path
+	end
+
+	local slug, volume, number, branch_id = string.match(path, "([^/]+)/([^/]+)/([^/]+)")
+	if branch_id then
+		branch_id = "?bid=" .. branch_id
+	else
+		branch_id = ""
+	end
+
+	local chapterPath = slug .. "/read/v" .. volume .. "/c" .. number .. branch_id
+	return baseURL .. "/ru/" .. chapterPath
 end
 
 local function getSearch(data)
-	local novels = json.GET(expandURL("search?type=manga&q=" .. data[QUERY]))
-	return map(novels, function(v)
+	local url = apiURL .. "?site_id[]=3&page=" .. data[PAGE]
+	if data[ORDER_BY_FILTER] then
+		url = url .. "&sort_by=" .. ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1]
+	else
+		url = url .. "&sort_by=rating_score"
+	end
+
+	for k, v in pairs(data) do
+		if v then
+			if (k > 9 and k < 16) then
+				url = url .. "&types[]=" .. k
+			elseif (k > 16 and k < 21) then
+				url = url .. "&scanlateStatus[]=" .. k - 16
+			elseif (k > 99 and k < 199) then
+				url = url .. "&genres[]=" .. k - 100
+			elseif (k > 199 and k < 600) then
+				url = url .. "&tags[]=" .. k - 200
+			end
+		end
+	end
+
+
+	if data[0] then --search
+		url = url .. "&q=" .. data[0]
+	end
+
+	local result = dkjson.GET(url)
+	return map(result.data, function(v)
 		return Novel {
 			title = v.rus_name or v.name,
-			link = v.slug,
-			imageURL = v.coverImage
+			link = v.slug_url or v.id .. "--" .. v.slug,
+			imageURL = v.cover.default
 		}
 	end)
 end
 
 local function getPassage(chapterURL)
-	local doc = GETDocument(expandURL(chapterURL .. (ui and "&ui=" .. ui:gsub("[^0-9]", "") or "")))
-	local chap = doc:selectFirst(".reader-container")
-	chap:child(0):before("<h1>" .. doc:select("div.reader-header-action__title:nth-child(3)"):text() .. "</h1>");
+	local slug, volume, number, branch_id = string.match(chapterURL, "([^/]+)/([^/]+)/([^/]+)")
+	if branch_id then
+		branch_id = "branch_id=" .. branch_id .. "&"
+	else
+		branch_id = ""
+	end
 
-	map(chap:select("img"), function(v)
-		if string.sub(v:attr("src"), 0, 1) == "/" then
-			v:attr("src", baseURL .. v:attr("src"))
-		elseif string.sub(v:attr("data-src"), 0, 1) == "/" then
-			v:attr("src", baseURL .. v:attr("data-src"))
-		elseif string.match(v:attr("data-src"), "[a-z]*://[^ >,;]*") then
-			v:attr("src", v:attr("data-src"))
-		end
-	end)
+	local url = apiURL .. "/" .. slug .. "/chapter?" .. branch_id .. "number=" .. number .. "&volume=" .. volume
+	local doc = dkjson.GET(url)
 
-	return pageOfElem(chap)
+	local chap = doc.data.content
+	if chap.type == "doc" then
+		local html = map(chap.content, function(v)
+			if v.type == "paragraph" then
+				local br = v.text
+				if type(v.content) == "table" then
+					br = table.concat(map(v.content, function(e) return e.text end), "<br>")
+				end
+				if br then
+					return "<p>" .. br .. "</p>"
+				else
+					return "<br>"
+				end
+			end
+			if v.type == "image" then
+				return '<img alt="" src="' .. v.attrs.images[0].image .. '" />'
+			end
+		end)
+		chap = table.concat(html, "")
+	end
+
+	return pageOfElem(Document(chap))
 end
 
 local function parseNovel(novelURL, loadChapters)
-	local d = GETDocument(expandURL(novelURL))
-	local response = json.decode(d:selectFirst("head"):html():match("window.__DATA__ = ({.-});"))
-	ui = response.user and tostring(response.user.id)
+	local response = dkjson.GET(apiURL .. "/" .. novelURL .. allfields).data
 
 	local novel = NovelInfo {
-		title = response.manga.rusName or response.manga.engName or response.manga.name,
-		genres = map(d:select("a.media-tag-item"), function(v) return v:text() end),
-		imageURL = d:selectFirst(".container_responsive img"):attr("src"),
-		description = d:select(".media-description__text"):text(),
+		title = response.rus_name or response.name,
+		genres = map(response.genres, function(v) return v.name end),
+		tags = map(response.tags, function(v) return v.name end),
+		imageURL = response.cover.default,
+		description = response.summary,
 		status = ({ NovelStatus.PUBLISHING, NovelStatus.COMPLETED, NovelStatus.PAUSED, NovelStatus.COMPLETED })
-			[response.manga.status]
+			[response.status.id]
 	}
 
-	map(d:select('div[class="media-info-list paper"] > [class="media-info-list__item"]'), function(v)
-		local name = v:select('div[class="media-info-list__title"]'):text();
-		if name == "Автор" then
-			novel:setAuthors({ v:select('div[class="media-info-list__value"]'):text() })
-		elseif name == "Художник" then
-			novel:setArtists({ v:select('div[class="media-info-list__value"]'):text() })
-		end
-	end)
+	if #response.authors > 0 then
+		novel:setAuthors(map(response.authors, function(v)
+			return v.name or ""
+		end))
+	end
+	if #response.artists > 0 then
+		novel.setArtists(map(response.artists, function(v)
+			return v.name or ""
+		end))
+	end
 
 	if loadChapters then
+		local chapterJson = dkjson.GET(apiURL .. "/" .. novelURL .. "/chapters").data
 		local chapterList = {}
-		for k, v in pairs(response.chapters.list) do
+		for k, chapter in pairs(chapterJson) do
 			table.insert(chapterList, NovelChapter {
-				order = #response.chapters.list - k,
-				release = v.chapter_created_at,
-				title = "Том " .. v.chapter_volume .. " Глава " .. v.chapter_number .. " " .. v.chapter_name,
-				link = response.manga.slug .. "/v" .. v.chapter_volume .. "/c" .. v.chapter_number .. "?bid=" .. (v.branch_id or ""),
+				title = "Том " .. chapter.volume .. " Глава " .. chapter.number .. " " .. chapter.name,
+				release = chapter.branches[1].created_at,
+				link = novelURL .. "/" .. chapter.volume .. "/" .. chapter.number .. "/" .. (chapter.branches[1].branch_id or ""),
+				order = chapter.index,
 			});
 		end
 		novel:setChapters(AsList(chapterList))
@@ -87,37 +163,12 @@ return {
 	id = 73,
 	name = "Ranobelib",
 	baseURL = baseURL,
-	imageURL = "https://ranobelib.me/icons/android-icon-192x192.png",
+	imageURL = "https://ranobelib.me/images/logo/rl/icon.png",
 	chapterType = ChapterType.HTML,
 
 	listings = {
 		Listing("Novel List", true, function(data)
-			local url = baseURL .. "/manga-list?sort=" .. ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1]
-
-			for k, v in pairs(data) do
-				if v then
-					if (k > 9 and k < 16) then
-						url = url .. "&types[]=" .. k
-					elseif (k > 16 and k < 21) then
-						url = url .. "&status[]=" .. k - 16
-					elseif (k > 99 and k < 199) then
-						url = url .. "&genres[include][]=" .. k - 100
-					elseif (k > 199 and k < 600) then
-						url = url .. "&tags[include][]=" .. k - 200
-					end
-				end
-			end
-
-			local d = GETDocument(url .. "&page=" .. data[PAGE])
-			ui = d:select("a.header-right-menu__item"):attr("href")
-
-			return map(d:select("div.media-card-wrap > a"), function(v)
-				return Novel {
-					title = v:select("h3"):text(),
-					link = shrinkURL(v:attr("href")),
-					imageURL = v:attr("data-src")
-				}
-			end)
+			return getSearch(data)
 		end)
 	},
 	getPassage = getPassage,
@@ -125,7 +176,7 @@ return {
 
 	hasCloudFlare = true,
 	hasSearch = true,
-	isSearchIncrementing = false,
+	isSearchIncrementing = true,
 	search = getSearch,
 	searchFilters = {
 		DropdownFilter(ORDER_BY_FILTER, "Сортировка", ORDER_BY_VALUES),
@@ -141,7 +192,6 @@ return {
 			CheckboxFilter(139, "Героическое фэнтези"), --ID: 39
 			CheckboxFilter(181, "Демоны"), --ID: 81
 			CheckboxFilter(140, "Детектив"), --ID: 40
-			CheckboxFilter(188, "Детское"), --ID: 88
 			CheckboxFilter(141, "Дзёсэй"), --ID: 41
 			CheckboxFilter(143, "Драма"), --ID: 43
 			CheckboxFilter(144, "Игра"), --ID: 44
@@ -166,12 +216,12 @@ return {
 			CheckboxFilter(154, "Приключения"), --ID: 54
 			CheckboxFilter(155, "Психология"), --ID: 55
 			CheckboxFilter(156, "Романтика"), --ID: 56
+			CheckboxFilter(157, "Самурайский боевик"), --ID: 57
+			CheckboxFilter(158, "Сверхъестественное"), --ID: 58
 			CheckboxFilter(159, "Сёдзё"), --ID: 59
 			CheckboxFilter(160, "Сёдзё-ай"), --ID: 60
 			CheckboxFilter(161, "Сёнэн"), --ID: 61
 			CheckboxFilter(162, "Сёнэн-ай"), --ID: 62
-			CheckboxFilter(157, "Самурайский боевик"), --ID: 57
-			CheckboxFilter(158, "Сверхъестественное"), --ID: 58
 			CheckboxFilter(163, "Спорт"), --ID: 63
 			CheckboxFilter(187, "Супер сила"), --ID: 87
 			CheckboxFilter(164, "Сэйнэн"), --ID: 64
@@ -180,6 +230,7 @@ return {
 			CheckboxFilter(167, "Ужасы"), --ID: 67
 			CheckboxFilter(168, "Фантастика"), --ID: 68
 			CheckboxFilter(169, "Фэнтези"), --ID: 69
+			CheckboxFilter(184, "Хентай"), --ID: 84
 			CheckboxFilter(170, "Школа"), --ID: 70
 			CheckboxFilter(171, "Эротика"), --ID: 71
 			CheckboxFilter(172, "Этти"), --ID: 72
@@ -188,7 +239,7 @@ return {
 		}),
 		FilterGroup("Теги", { --offset: 200
 			CheckboxFilter(528, "Авантюристы"), --ID: 328
-			CheckboxFilter(376, "Антигерой"), --ID: 176
+			CheckboxFilter(375, "Антигерой"), --ID: 175
 			CheckboxFilter(533, "Бессмертные"), --ID: 333
 			CheckboxFilter(418, "Боги"), --ID: 218
 			CheckboxFilter(509, "Борьба за власть"), --ID: 309
