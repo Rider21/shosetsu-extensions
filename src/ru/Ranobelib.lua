@@ -7,22 +7,23 @@ local dkjson = Require("dkjson")
 local ORDER_BY_FILTER = 3
 local ORDER_BY_VALUES = {
 	"По рейтингу",
+	"По популярности",
 	"По просмотрам",
 	"Количеству глав",
 	"Дате обновления",
 	"Дате добавления",
 	"По названию (A-Z)",
-	"По названию (А-Я)"
+	"По названию (А-Я)",
 }
 local ORDER_BY_TERMS = {
 	"rate_avg",
 	"rating_score",
 	"views",
 	"chap_count",
-	"last_chapter",
+	"last_chapter_at",
 	"created_at",
 	"name",
-	"rus_name"
+	"rus_name",
 }
 local allfields =
 "?fields[]=summary&fields[]=genres&fields[]=tags&fields[]=teams&fields[]=authors&fields[]=status_id&fields[]=artists"
@@ -131,17 +132,6 @@ local function parseNovel(novelURL, loadChapters)
 		status = ({ NovelStatus.PUBLISHING, NovelStatus.COMPLETED, NovelStatus.PAUSED, NovelStatus.COMPLETED })
 			[response.status.id]
 	}
-
-	if #response.authors > 0 then
-		novel:setAuthors(map(response.authors, function(v)
-			return v.name or ""
-		end))
-	end
-	if #response.artists > 0 then
-		novel.setArtists(map(response.artists, function(v)
-			return v.name or ""
-		end))
-	end
 
 	if loadChapters then
 		local chapterJson = dkjson.GET(apiURL .. "/" .. novelURL .. "/chapters").data
