@@ -11,6 +11,10 @@
     {
       "name": "url",
       "ver": "1.0.0"
+    },
+    {
+      "name": "bit",
+      "ver": "1.0.0"
     }
   ],
   "scripts": [
@@ -79,6 +83,16 @@
       "fileName": "NovelTL",
       "imageURL": "https://novel.tl/logo.png",
       "id": 702,
+      "lang": "ru",
+      "ver": "1.0.0",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Ruvers",
+      "fileName": "Ruvers",
+      "imageURL": "https://ruvers.ru/img/favicon/apple-touch-icon.png",
+      "id": 711,
       "lang": "ru",
       "ver": "1.0.0",
       "libVer": "1.0.0",
