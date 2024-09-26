@@ -138,9 +138,9 @@ local function parseNovel(novelURL, loadChapters)
 			novel:setGenres(split(str:gsub("Жанры: ", ""), ", "))
 		elseif str:match("Статус:") then
 			if str:match("продолжается") then
-				novel:setStatus(NovelStatus(0))
+				novel:setStatus(NovelStatus.PUBLISHING)
 			else
-				novel:setStatus(NovelStatus(1))
+				novel:setStatus(NovelStatus.COMPLETED)
 			end
 		end
 	end)

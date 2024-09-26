@@ -1,7 +1,6 @@
 -- {"id":711,"ver":"1.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1"]}
 
-local baseURL = "https://ruvers.ru/"
-
+local baseURL = "https://ruvers.ru"
 local json = Require("dkjson")
 
 local SORT_BY_FILTER = 3
@@ -17,7 +16,7 @@ local function expandURL(url)
 end
 
 local function getSearch(data)
-	local url = baseURL .. "api/books?page=" .. data[PAGE] ..
+	local url = baseURL .. "/api/books?page=" .. data[PAGE] ..
 		"&sort=" .. SORT_BY_TERMS[data[SORT_BY_FILTER] + 1]
 
 	if data[0] then --search
@@ -30,16 +29,16 @@ local function getSearch(data)
 		return Novel {
 			title = v.name,
 			link = v.slug,
-			imageURL = (v.images[0] and baseURL .. v.images[0]) or ""
+			imageURL = expandURL(v.images[1])
 		}
 	end)
 end
 
 local function getPassage(chapterURL)
-	local doc = GETDocument(baseURL .. chapterURL)
-	local chap = doc:select(".chapter_text > books-chapters-text-component"):attr(":text")
+	local doc = GETDocument(expandURL(chapterURL))
+	local chap = doc:select(".chapter_text > books-chapters-text-component, .chapter_text > mobile-books-chapters-text-component")
 
-	return pageOfElem(Document(chap))
+	return chap:attr(":text")
 end
 
 local function parseNovel(novelURL, loadChapters)
@@ -50,15 +49,22 @@ local function parseNovel(novelURL, loadChapters)
 		genres = map(response:select(".genres > a"), function(genres) return genres:text() end),
 		imageURL = response:select(".slider_prods_single > img"):attr("src"),
 		description = response:select(".book_description"):text(),
-		--status
 	}
+
+	local status = response:select(".status_row > div:nth-child(1) > a"):text()
+
+	if staus == "В работе" then
+		novel:setStatus(NovelStatus.PUBLISHING)
+	elseif status == "Завершено" then
+		novel:setStatus(NovelStatus.COMPLETED)
+	end
 
 	if loadChapters then
 		local bookId = response:select("comments-list"):attr("commentable-id");
-		local chapterJson = json.GET(baseURL .. "api/books/" .. bookId .. "/chapters/all")
+		local chapterJson = json.GET(baseURL .. "/api/books/" .. bookId .. "/chapters/all")
 		local chapterList = {}
 		for k, v in pairs(chapterJson.data) do
-			if v.is_published and v.is_free or v.purchased_by_user then
+			if v.is_published and (v.is_free or v.purchased_by_user) then
 				table.insert(chapterList, NovelChapter {
 					title = "Глава " .. v.number .. " " .. (v.name or ""),
 					link = novelURL .. "/" .. v.id,
