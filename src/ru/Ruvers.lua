@@ -7,6 +7,42 @@ local SORT_BY_FILTER = 3
 local SORT_BY_VALUES = { "По названию", "По дате добавления", "По рейтингу" }
 local SORT_BY_TERMS = { "name", "-created_at", "-rating" }
 
+local function unescapeUnicode(escapedString)
+	-- This function replaces all occurrences of `\uXXXX` in the string
+	-- with the corresponding unicode character.
+	return (string.gsub(escapedString, "\\u(%x%x%x%x)", function(hexCode)
+		-- Convert the hex code to a decimal number.
+		local unicodeValue = tonumber("0x" .. hexCode)
+
+		-- Handle different unicode ranges based on the value.
+		if unicodeValue < 0x80 then
+			-- For values less than 0x80, the character is simply the same as the unicode value.
+			return string.char(unicodeValue)
+		elseif unicodeValue < 0x800 then
+			-- For values less than 0x800, the character is encoded in 2 bytes.
+			local byte1 = unicodeValue % 64;
+			unicodeValue = math.floor(unicodeValue / 64)
+			return string.char(0xC0 + unicodeValue, 0x80 + byte1)
+		elseif unicodeValue < 0x10000 then
+			-- For values less than 0x10000, the character is encoded in 3 bytes.
+			local byte1 = unicodeValue % 64;
+			unicodeValue = math.floor(unicodeValue / 64)
+			local byte2 = unicodeValue % 64;
+			unicodeValue = math.floor(unicodeValue / 64)
+			return string.char(0xE0 + unicodeValue, 0x80 + byte2, 0x80 + byte1)
+		else
+			-- For values greater than or equal to 0x10000, the character is encoded in 4 bytes.
+			local byte1 = unicodeValue % 64;
+			unicodeValue = math.floor(unicodeValue / 64)
+			local byte2 = unicodeValue % 64;
+			unicodeValue = math.floor(unicodeValue / 64)
+			local byte3 = unicodeValue % 64;
+			unicodeValue = math.floor(unicodeValue / 64)
+			return string.char(0xF0 + unicodeValue, 0x80 + byte3, 0x80 + byte2, 0x80 + byte1)
+		end
+	end))
+end
+
 local function shrinkURL(url)
 	return url:gsub(baseURL .. "/", "")
 end
@@ -37,8 +73,9 @@ end
 local function getPassage(chapterURL)
 	local doc = GETDocument(expandURL(chapterURL))
 	local chap = doc:select(".chapter_text > books-chapters-text-component, .chapter_text > mobile-books-chapters-text-component")
+	local chapterText = unescapeUnicode(chap:attr(":text"))
 
-	return chap:attr(":text")
+	return pageOfElem(Document(chapterText))
 end
 
 local function parseNovel(novelURL, loadChapters)
