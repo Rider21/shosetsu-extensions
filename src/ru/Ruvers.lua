@@ -89,8 +89,7 @@ local function parseNovel(novelURL, loadChapters)
 	}
 
 	local status = response:select(".status_row > div:nth-child(1) > a"):text()
-
-	if staus == "В работе" then
+	if status == "В работе" then
 		novel:setStatus(NovelStatus.PUBLISHING)
 	elseif status == "Завершено" then
 		novel:setStatus(NovelStatus.COMPLETED)

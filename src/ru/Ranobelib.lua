@@ -153,7 +153,7 @@ return {
 	id = 73,
 	name = "Ranobelib",
 	baseURL = baseURL,
-	imageURL = "https://ranobelib.me/images/logo/rl/icon.png",
+	imageURL = "https://ranobelib.me/static/images/logo/rl/icon.png",
 	chapterType = ChapterType.HTML,
 
 	listings = {

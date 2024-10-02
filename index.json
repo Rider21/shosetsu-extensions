@@ -47,7 +47,7 @@
     {
       "name": "Ranobelib",
       "fileName": "Ranobelib",
-      "imageURL": "https://ranobelib.me/images/logo/rl/icon.png",
+      "imageURL": "https://ranobelib.me/static/images/logo/rl/icon.png",
       "id": 73,
       "lang": "ru",
       "ver": "2.1.0",
@@ -89,6 +89,16 @@
       "fileName": "Ruvers",
       "imageURL": "https://ruvers.ru/img/favicon/apple-touch-icon.png",
       "id": 711,
+      "lang": "ru",
+      "ver": "1.0.0",
+      "libVer": "1.0.0",
+      "md5": ""
+    },
+    {
+      "name": "Целлюлоза",
+      "fileName": "Zelluloza",
+      "imageURL": "https://zelluloza.ru/assets/img/icons/Logo.png",
+      "id": 722,
       "lang": "ru",
       "ver": "1.0.0",
       "libVer": "1.0.0",
