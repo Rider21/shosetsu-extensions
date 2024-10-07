@@ -5,13 +5,13 @@ local baseURL = "https://zelluloza.ru"
 local SORT_BY_FILTER = 3
 local SORT_BY_VALUES =
 {
-  "Топ-недели",
-  "Бестселеры",
-  "Популярные у читателей",
-  "Книжные новинки",
-  "Законченные книги",
+  "По рейтингу",
+  "По изменению",
+  "По длительности чтения",
+  "По количеству читателей",
+  "По популярности",
 }
-local SORT_BY_TERMS = { "6.0", "5.0", "2.0", "0.0", "0.1" }
+local SORT_BY_TERMS = { "3", "0", "1", "2", "4" }
 
 local alphabet = {
   ["~"] = "0",
@@ -39,7 +39,7 @@ local function decrypt(encrypt)
   end
 
   -- Initialize an empty string to store the decrypted text.
-  local utf8String = ""
+  local decrypted = ""
 
   -- Iterate through the encrypted string two characters at a time.
   for j = 1, #encrypt, 2 do
@@ -51,11 +51,11 @@ local function decrypt(encrypt)
     local hexCode = tonumber(alphabet[firstChar] .. alphabet[secondChar], 16)
 
     -- Convert the hex code to a character and append it to the decrypted string.
-    utf8String = utf8String .. string.char(hexCode)
+    decrypted = decrypted .. string.char(hexCode)
   end
 
   -- Return the decrypted string wrapped in <p> tags.
-  return "<p>" .. utf8String .. "</p>"
+  return "<p>" .. decrypted .. "</p>"
 end
 
 local function shrinkURL(url)
@@ -67,15 +67,6 @@ local function expandURL(url)
 end
 
 local function getSearch(data)
-  local sort = SORT_BY_TERMS[data[SORT_BY_FILTER] + 1]
-
-  local body =
-      string.format(
-        "125:0:0:0.%s.0.0.0.0.0.0.0.0.0.1.s.1..:%s",
-        sort,
-        data[PAGE]
-      )
-
   local response =
       RequestDocument(
         POST(
@@ -84,7 +75,7 @@ local function getSearch(data)
           FormBodyBuilder()
           :add("op", "morebooks")
           :add("par1", data[0] or "")
-          :add("par2", body)
+          :add("par2", "206:0:0:0.0.0.0.0.0.0.10.0.0.0.0.0..0..:" .. data[PAGE])
           :add("par4", "")
           :build()
         )
@@ -182,7 +173,17 @@ return {
 
   listings = {
     Listing("Novel List", true, function(data)
-      return getSearch(data)
+      local sort = SORT_BY_TERMS[data[SORT_BY_FILTER] + 1]
+      local path = "/top/freebooks/?sort_order=" .. sort .. "&page=" .. data[PAGE]
+
+      local response = GETDocument(baseURL .. path)
+      return map(response:select('section[class="book-card-item"]'), function(v)
+        return Novel {
+          title = v:select('span[itemprop="name"]'):text(),
+          link = v:select('a[class="txt"]'):attr("href"):gsub("[^%d]", ""),
+          imageURL = baseURL .. v:select('img[class="shadow"]'):attr("src"),
+        }
+      end)
     end)
   },
 
@@ -190,7 +191,7 @@ return {
   parseNovel = parseNovel,
 
   hasSearch = true,
-  isSearchIncrementing = true,
+  isSearchIncrementing = false,
   search = getSearch,
   searchFilters = {
     DropdownFilter(SORT_BY_FILTER, "Сортировка", SORT_BY_VALUES),

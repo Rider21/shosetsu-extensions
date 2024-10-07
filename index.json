@@ -11,6 +11,10 @@
     {
       "name": "url",
       "ver": "1.0.0"
+    },
+    {
+      "name": "utf8",
+      "ver": "1.0.0"
     }
   ],
   "scripts": [
@@ -90,7 +94,7 @@
       "imageURL": "https://ruvers.ru/img/favicon/apple-touch-icon.png",
       "id": 711,
       "lang": "ru",
-      "ver": "1.0.0",
+      "ver": "1.0.1",
       "libVer": "1.0.0",
       "md5": ""
     },
