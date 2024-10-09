@@ -1,16 +1,10 @@
 -- {"ver":"1.0.0","author":"Stepets"}
 
-local utf8 = {
-  config = {
-    unpack = table.unpack,
-    int32array = function(size)
-      return {}
-    end,
-    conversion = {
-      uc_lc = nil,
-      lc_uc = nil
-    }
-  },
+local config = {
+  unpack = table.unpack,
+  int32array = function(size)
+    return {}
+  end,
 }
 
 -- $Id: utf8.lua 179 2009-04-03 18:10:03Z pasta $
@@ -35,7 +29,7 @@ Copyright (c) 2006-2007, Kyle Smith
 All rights reserved.
 
 Contributors:
-	Alimov Stepan
+  Alimov Stepan
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -74,6 +68,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -- UTF8-tail   = %x80-BF
 --
 
+--return function(utf8)
+local utf8            = {}
+
 local byte            = string.byte
 local char            = string.char
 local dump            = string.dump
@@ -89,10 +86,10 @@ local utf8charpattern = '[%z\1-\127\194-\244][\128-\191]*'
 
 local function utf8symbollen(byte)
   return not byte and 0 or (byte < 0x80 and 1) or (byte >= 0xF0 and 4) or (byte >= 0xE0 and 3) or (byte >= 0xC0 and 2) or
-      1
+  1
 end
 
-local head_table = utf8.config.int32array(256)
+local head_table = config.int32array(256)
 for i = 0, 255 do
   head_table[i] = utf8symbollen(i)
 end
@@ -201,7 +198,7 @@ local function utf8char(...)
     end
   end
 
-  return char(utf8.config.unpack(result))
+  return char(config.unpack(result))
 end
 
 
@@ -436,8 +433,7 @@ hhhccthccthccthcthhh
 n == 0: current position
 n > 0: n jumps forward
 n < 0: n more scans backwards
---]]
---
+--]]--
 local function utf8offset(str, n, bs)
   local l = #str
   if not bs then
@@ -514,45 +510,45 @@ local function utf8replace(s, mapping)
   local result = utf8.raw.gsub(s, utf8charpattern, mapping)
   return result
 end
-
-local function utf8upper(s)
-  return utf8replace(s, utf8.config.conversion.lc_uc)
+--[[
+local function utf8upper (s)
+  return utf8replace(s, config.conversion.lc_uc)
 end
 
-if utf8.config.conversion.lc_uc then
+if config.conversion.lc_uc then
   upper = utf8upper
 end
 
-local function utf8lower(s)
-  return utf8replace(s, utf8.config.conversion.uc_lc)
+local function utf8lower (s)
+  return utf8replace(s, config.conversion.uc_lc)
 end
 
-if utf8.config.conversion.uc_lc then
+if config.conversion.uc_lc then
   lower = utf8lower
 end
-
-utf8.len       = utf8len
-utf8.sub       = utf8sub
-utf8.reverse   = utf8reverse
-utf8.char      = utf8char
-utf8.unicode   = utf8unicode
-utf8.byte      = utf8byte
-utf8.next      = utf8next
-utf8.gensub    = utf8gensub
-utf8.validator = utf8validator
-utf8.validate  = utf8validate
-utf8.dump      = dump
-utf8.format    = format
-utf8.lower     = lower
-utf8.upper     = upper
-utf8.rep       = rep
-utf8.raw       = {}
-for k, v in pairs(string) do
-  utf8.raw[k] = v
-end
+--]]
+utf8.len         = utf8len
+utf8.sub         = utf8sub
+utf8.reverse     = utf8reverse
+utf8.char        = utf8char
+utf8.unicode     = utf8unicode
+utf8.byte        = utf8byte
+utf8.next        = utf8next
+utf8.gensub      = utf8gensub
+utf8.validator   = utf8validator
+utf8.validate    = utf8validate
+utf8.dump        = dump
+utf8.format      = format
+utf8.lower       = lower
+utf8.upper       = upper
+utf8.rep         = rep
+--utf8.raw         = {}
+--for k,v in pairs(string) do
+--  utf8.raw[k] = v
+--end
 
 utf8.charpattern = utf8charpattern
-utf8.offset = utf8offset
+utf8.offset      = utf8offset
 if _VERSION == 'Lua 5.3' then
   local utf8_53 = require "utf8"
   utf8.codes = utf8_53.codes
@@ -564,3 +560,5 @@ else
 end
 
 return utf8
+
+--end

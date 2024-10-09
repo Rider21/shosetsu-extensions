@@ -107,6 +107,16 @@
       "ver": "1.0.0",
       "libVer": "1.0.0",
       "md5": ""
+    },
+    {
+      "name": "Автор Тудей",
+      "fileName": "Authortoday",
+      "imageURL": "https://author.today/dist/favicons/android-chrome-192x192.png",
+      "id": 733,
+      "lang": "ru",
+      "ver": "1.0.0",
+      "libVer": "1.0.0",
+      "md5": ""
     }
   ]
 }
