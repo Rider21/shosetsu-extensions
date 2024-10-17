@@ -86,7 +86,7 @@ local utf8charpattern = '[%z\1-\127\194-\244][\128-\191]*'
 
 local function utf8symbollen(byte)
   return not byte and 0 or (byte < 0x80 and 1) or (byte >= 0xF0 and 4) or (byte >= 0xE0 and 3) or (byte >= 0xC0 and 2) or
-  1
+      1
 end
 
 local head_table = config.int32array(256)
@@ -507,7 +507,8 @@ local function utf8replace(s, mapping)
   if type(mapping) ~= "table" then
     error("bad argument #2 to 'utf8replace' (table expected, got " .. type(mapping) .. ")")
   end
-  local result = utf8.raw.gsub(s, utf8charpattern, mapping)
+  --local result = utf8.raw.gsub(s, utf8charpattern, mapping)
+  local result = string.gsub(s, utf8charpattern, mapping)
   return result
 end
 --[[

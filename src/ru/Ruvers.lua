@@ -53,10 +53,15 @@ end
 local function getPassage(chapterURL)
 	local doc = GETDocument(expandURL(chapterURL))
 	local chap = doc:select(
-	".chapter_text > books-chapters-text-component, .chapter_text > mobile-books-chapters-text-component")
-	local chapterText = unescapeUnicode(chap:attr(":text"))
+		".chapter_text > books-chapters-text-component, .chapter_text > mobile-books-chapters-text-component")
 
-	return pageOfElem(Document(chapterText))
+	local chapterNumber = doc:select(
+	".info > books-chapters-select-component, mobile-books-chapters-select-component"):attr("chapter-number")
+
+	local chapterTitle = "<h1>Глава " .. chapterNumber .. "</h1>";
+	local chapterText = unescapeUnicode(chap:attr(":text"):sub(2, -2))
+
+	return pageOfElem(Document(chapterTitle .. chapterText))
 end
 
 local function parseNovel(novelURL, loadChapters)

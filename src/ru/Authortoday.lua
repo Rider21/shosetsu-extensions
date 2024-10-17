@@ -1,4 +1,4 @@
--- {"id":733,"ver":"2.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1", "utf8>=1.0.0"]}
+-- {"id":733,"ver":"1.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1", "utf8>=1.0.0"]}
 
 local baseURL = "https://author.today"
 local baseAPI = "https://api.author.today/v1/"
@@ -151,28 +151,33 @@ return {
 	baseURL = baseURL,
 	imageURL = "https://author.today/dist/favicons/android-chrome-192x192.png",
 	chapterType = ChapterType.HTML,
-	listings = { Listing("Novel List", true, function(data)
-		local sort = ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1]
-		local url = "catalog/search?page=" .. data[PAGE] .. "&sorting=" .. sort
 
-		local response = json.GET(baseAPI .. url, HEADERS)
+	listings = {
+		Listing("Novel List", true, function(data)
+			local sort = ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1]
+			local url = "catalog/search?page=" .. data[PAGE] .. "&sorting=" .. sort
 
-		return map(response.searchResults, function(v)
-			return Novel {
-				title = v.title,
-				link = v.id,
-				imageURL = 'https://cm.author.today/content/' .. v.coverUrl,
-			}
+			local response = json.GET(baseAPI .. url, HEADERS)
+
+			return map(response.searchResults, function(v)
+				return Novel {
+					title = v.title,
+					link = v.id,
+					imageURL = 'https://cm.author.today/content/' .. v.coverUrl,
+				}
+			end)
 		end)
-	end) },
+	},
 	getPassage = getPassage,
 	parseNovel = parseNovel,
+
 	hasSearch = true,
 	isSearchIncrementing = true,
 	search = getSearch,
 	searchFilters = {
 		DropdownFilter(ORDER_BY_FILTER, "Сортировка", ORDER_BY_VALUES),
 	},
+
 	shrinkURL = shrinkURL,
 	expandURL = expandURL,
 }
