@@ -1,23 +1,28 @@
 -- {"id":733,"ver":"1.0.0","libVer":"1.0.0","author":"Rider21","dep":["dkjson>=1.0.1", "utf8>=1.0.0"]}
 
 local baseURL = "https://author.today"
-local baseAPI = "https://api.author.today/v1/"
 
-local json = Require("dkjson")
+local dkjson = Require("dkjson")
 local utf8 = Require("utf8")
-
-local HEADERS = HeadersBuilder():add("Authorization", "Bearer guest"):build()
 
 local ORDER_BY_FILTER = 3
 local ORDER_BY_VALUES = {
 	"По популярности",
-	"По количеству лайков",
-	"По комментариям",
-	"По новизне",
-	"По просмотрам",
-	"Набирающие популярность",
+	"по новизне",
+	"по количеству лайков",
+	"по просмотрам",
+	"по комментариям",
+	"набирающие популярность",
 }
-local ORDER_BY_TERMS = { "popular", "likes", "comments", "id", "chapter_date", "count_chapters" }
+
+local ORDER_BY_TERMS = {
+	"popular",
+	"recent",
+	"likes",
+	"views",
+	"comments",
+	"trending",
+}
 
 local function BitXOR(a, b) --Bitwise xor
 	local p, c = 1, 0
@@ -36,9 +41,9 @@ local function BitXOR(a, b) --Bitwise xor
 end
 
 -- This function decrypts a string using a simple XOR cipher with a key.
-local function decrypt(key, encrypt)
+local function decrypt(key, encrypt, userID)
 	-- Reverse the key and append a special string "@_@" to it.
-	local fixedKey = utf8.reverse(key) .. "@_@"
+	local fixedKey = utf8.reverse(key) .. "@_@" .. (userID or "")
 	-- Create a table to store the key bytes.
 	local keyBytes = {}
 
@@ -84,7 +89,7 @@ local function getSearch(data)
 		return Novel {
 			title = v:select('h4[class="work-title"], div.book-title'):text(),
 			link = v:select("a"):attr("href"):gsub("[^%d]", ""),
-			imageURL = v:select('img'):attr("data-src"),
+			imageURL = v:select("img"):attr("data-src"),
 		}
 	end)
 end
@@ -92,54 +97,66 @@ end
 local function getPassage(chapterURL)
 	local bookID, chapterID = string.match(chapterURL, "(%d+)/(%d+)")
 
-	local res =
-		json.GET(
-			baseAPI .. "work/" .. bookID .. "/chapter/" .. chapterID .. "/text",
-			HEADERS
-		)
+	local resHTML = GETDocument(expandURL(chapterURL))
+	local user = resHTML:select("div.wrapper:nth-child(3) > script:nth-child(4)"):html()
+	local configHtml = resHTML:select("body > script:nth-child(14)"):html()
 
-	local chapterText = decrypt(res.key, res.text)
-	return pageOfElem(Document(chapterText), true)
+	local chaptersRaw = string.match(configHtml, "chapters: (.-)%],") .. "]"
+	local chaptersJson = dkjson.decode(chaptersRaw)
+	local chapterTitle = ""
+
+	for i, v in pairs(chaptersJson) do
+		if tostring(v.id) == chapterID then
+			chapterTitle = "<h1>" .. v.title .. "</h1>"
+			break
+		end
+	end
+
+	local res = Request(GET(baseURL .. "/reader/" .. bookID .. "/chapter?id=" .. chapterID))
+	local key = res:headers():get("reader-secret")
+	local userId = string.match(user, "userId: ([^,]+)")
+
+	local json = dkjson.decode(res:body():string())
+
+	local chapterText = decrypt(key, json.data.text, userId)
+	return pageOfElem(Document(chapterTitle .. chapterText), true)
 end
 
 local function parseNovel(novelURL, loadChapters)
-	local book = json.GET(baseAPI .. "work/" .. novelURL .. "/details", HEADERS)
+	local doc = GETDocument(expandURL(novelURL, KEY_NOVEL_URL))
 
 	local novel = NovelInfo {
-		title = book.title,
-		tags = book.tags,
-		imageURL = book.coverUrl,
-		status = book.isFinished and NovelStatus.COMPLETED or NovelStatus.PUBLISHING,
+		title = doc:select("h1.book-title"):text(),
+		imageURL = doc:select(".cover-image"):attr("src"):match("(.-)%?"),
+		description = doc:select(".annotation"):text(),
+		authors = { doc:select('meta[itemprop="name"]'):attr("content") }
 	}
 
-	local description = ""
+	novel:setTags(map(
+		doc:select(".tags > a"), function(tags)
+			return tags:attr("title")
+		end)
+	)
 
-	if book.annotation then
-		description = description .. book.annotation .. "\n"
+	if doc:select("span.label:nth-child(1)"):text():match("процессе") then
+		novel:setStatus(NovelStatus.PUBLISHING)
+	else
+		novel:setStatus(NovelStatus.COMPLETED)
 	end
-	if book.authorNotes then
-		description = description .. "Примечания автора:\n" .. book.authorNotes
-	end
-	novel:setDescription(description)
 
 	if loadChapters then
-		local chaptersJSON =
-			json.GET(baseAPI .. "work/" .. novelURL .. "/content", HEADERS)
-
-		local chapterList = {}
-		for k, chapter in pairs(chaptersJSON) do
-			if chapter.isAvailable and not chapter.isDraft then
-				table.insert(
-					chapterList,
-					NovelChapter {
-						title = chapter.title or "Глава " .. (k + 1),
-						link = novelURL .. "/" .. chapter.id,
-						release = chapter.publishTime or chapter.lastModificationTime,
-						order = chapter.sortOrder or k,
-					}
-				)
+		local chapterHtml = doc:select("#tab-chapters > ul > li")
+		local chapterList = map(chapterHtml, function(v, i)
+			local chapterInfo = v:select("a")
+			if chapterInfo:size() > 0 then
+				return NovelChapter {
+					title = chapterInfo:text(),
+					link = string.gsub(chapterInfo:attr("href"), "/reader/", ""),
+					release = v:select("span > span"):attr("data-time"),
+					order = i
+				}
 			end
-		end
+		end)
 		novel:setChapters(AsList(chapterList))
 	end
 	return novel
@@ -155,15 +172,14 @@ return {
 	listings = {
 		Listing("Novel List", true, function(data)
 			local sort = ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1]
-			local url = "catalog/search?page=" .. data[PAGE] .. "&sorting=" .. sort
+			local url = baseURL .. "/work/genre/all/ebook?sorting=" .. sort
 
-			local response = json.GET(baseAPI .. url, HEADERS)
-
-			return map(response.searchResults, function(v)
+			local d = GETDocument(url)
+			return map(d:select("a.work-row, div.book-row"), function(v)
 				return Novel {
-					title = v.title,
-					link = v.id,
-					imageURL = 'https://cm.author.today/content/' .. v.coverUrl,
+					title = v:select('h4[class="work-title"], div.book-title'):text(),
+					link = v:select("a"):attr("href"):gsub("[^%d]", ""),
+					imageURL = v:select("img"):attr("src"):match("(.-)%?"),
 				}
 			end)
 		end)
