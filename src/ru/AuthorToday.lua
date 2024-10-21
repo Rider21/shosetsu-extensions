@@ -42,6 +42,7 @@ end
 
 -- This function decrypts a string using a simple XOR cipher with a key.
 local function decrypt(key, encrypt, userID)
+	if userID == "null" or tonumber(userID) == nil then userID = nil end
 	-- Reverse the key and append a special string "@_@" to it.
 	local fixedKey = utf8.reverse(key) .. "@_@" .. (userID or "")
 	-- Create a table to store the key bytes.
@@ -89,19 +90,16 @@ local function getSearch(data)
 		return Novel {
 			title = v:select('h4[class="work-title"], div.book-title'):text(),
 			link = v:select("a"):attr("href"):gsub("[^%d]", ""),
-			imageURL = v:select("img"):attr("data-src"),
+			imageURL = v:select("img"):attr("data-src"):match("(.-)%?"),
 		}
 	end)
 end
 
 local function getPassage(chapterURL)
 	local bookID, chapterID = string.match(chapterURL, "(%d+)/(%d+)")
+	local resHTML = Request(GET(expandURL(chapterURL))):body():string()
 
-	local resHTML = GETDocument(expandURL(chapterURL))
-	local user = resHTML:select("div.wrapper:nth-child(3) > script:nth-child(4)"):html()
-	local configHtml = resHTML:select("body > script:nth-child(14)"):html()
-
-	local chaptersRaw = string.match(configHtml, "chapters: (.-)%],") .. "]"
+	local chaptersRaw = string.match(resHTML, "chapters: (.-)%],") .. "]"
 	local chaptersJson = dkjson.decode(chaptersRaw)
 	local chapterTitle = ""
 
@@ -114,8 +112,7 @@ local function getPassage(chapterURL)
 
 	local res = Request(GET(baseURL .. "/reader/" .. bookID .. "/chapter?id=" .. chapterID))
 	local key = res:headers():get("reader-secret")
-	local userId = string.match(user, "userId: ([^,]+)")
-
+	local userId = string.match(resHTML, "userId: ([^,]+)")
 	local json = dkjson.decode(res:body():string())
 
 	local chapterText = decrypt(key, json.data.text, userId)
@@ -126,26 +123,34 @@ local function parseNovel(novelURL, loadChapters)
 	local doc = GETDocument(expandURL(novelURL, KEY_NOVEL_URL))
 
 	local novel = NovelInfo {
-		title = doc:select("h1.book-title"):text(),
+		title = doc:select("h1.book-title, h1.card-title"):text(),
 		imageURL = doc:select(".cover-image"):attr("src"):match("(.-)%?"),
-		description = doc:select(".annotation"):text(),
+		description = doc:select(".annotation, .card-description"):text(),
 		authors = { doc:select('meta[itemprop="name"]'):attr("content") }
 	}
 
+	if doc:select(".card-author > a"):size() > 0 then
+		novel:setAuthors(map(
+			doc:select(".card-author > a"), function(name)
+				return name:text()
+			end)
+		)
+	end
+
 	novel:setTags(map(
-		doc:select(".tags > a"), function(tags)
-			return tags:attr("title")
+		doc:select(".tags > a, span.tag-text"), function(tags)
+			return tags:text()
 		end)
 	)
 
-	if doc:select("span.label:nth-child(1)"):text():match("процессе") then
+	if doc:select("span.label:nth-child(1), label.label"):text():match("процессе") then
 		novel:setStatus(NovelStatus.PUBLISHING)
 	else
 		novel:setStatus(NovelStatus.COMPLETED)
 	end
 
 	if loadChapters then
-		local chapterHtml = doc:select("#tab-chapters > ul > li")
+		local chapterHtml = doc:select("#tab-chapters > ul > li, .list-unstyled >li.clearfix")
 		local chapterList = map(chapterHtml, function(v, i)
 			local chapterInfo = v:select("a")
 			if chapterInfo:size() > 0 then
@@ -172,14 +177,14 @@ return {
 	listings = {
 		Listing("Novel List", true, function(data)
 			local sort = ORDER_BY_TERMS[data[ORDER_BY_FILTER] + 1]
-			local url = baseURL .. "/work/genre/all/ebook?sorting=" .. sort
+			local url = baseURL .. "/work/genre/all/?sorting=" .. sort .. "&page=" .. data[PAGE]
 
 			local d = GETDocument(url)
 			return map(d:select("a.work-row, div.book-row"), function(v)
 				return Novel {
 					title = v:select('h4[class="work-title"], div.book-title'):text(),
 					link = v:select("a"):attr("href"):gsub("[^%d]", ""),
-					imageURL = v:select("img"):attr("src"):match("(.-)%?"),
+					imageURL = v:select("img"):attr("data-src"):match("(.-)%?"),
 				}
 			end)
 		end)
